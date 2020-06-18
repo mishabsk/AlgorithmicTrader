@@ -1,0 +1,230 @@
+#%%
+
+import numpy as np
+
+#%%
+
+import pandas as pd
+
+#%%
+
+import datetime
+
+#%%
+
+import matplotlib.pyplot as plt
+
+#%%
+
+from pandas_datareader import data as pdr
+
+#%%
+
+import fix_yahoo_finance as yf
+
+#%%
+
+start_sp=datetime.datetime(2010,10,1)
+
+#%%
+
+end_sp=datetime.datetime(2019,10,1)
+
+#%%
+
+gold=pdr.get_data_yahoo('GLD', start_sp, end_sp)
+
+#%%
+
+gold.head()
+
+#%%
+
+tesla=pdr.get_data_yahoo('TSLA', start_sp, end_sp)
+
+#%%
+
+tesla.head()
+
+#%%
+
+plt.figure(figsize=(12,5))
+plt.plot(tesla['Close'], label='Tesla')
+plt.plot(gold['Close'], label='Gold')
+plt.xlabel('Time')
+plt.ylabel('Price')
+plt.legend()
+plt.show()
+
+#%%
+
+gl=pd.DataFrame(gold)
+
+#%%
+
+ts=pd.DataFrame(tesla)
+
+#%%
+
+plt.figure(figsize=(12,5))
+plt.plot(spread_ratio, label= 'Spread Ratio', color='g')
+plt.ylabel('Time')
+plt.xlabel(' Value')
+plt.title('Spread Ratio')
+plt.legend()
+plt.show()
+
+#%%
+
+spread=gl['Close']-ts['Close']
+
+#%%
+
+
+plt.figure(figsize=(12,5))
+plt.plot(spread, label='Spread Value', color='m')
+plt.ylabel('Time')
+plt.xlabel(' Value')
+plt.title('Spread Value')
+plt.legend()
+plt.show()
+
+#%%
+
+def zscore(stocks):
+  return (stocks-stocks.mean()/np.std(stocks))
+  
+
+#%%
+
+zscore(spread).plot(figsize=(12,5))
+plt.axhline(zscore(spread).mean(), color='b')
+plt.axhline(2.5,c='r', ls='dashed', color='m', label='2.5STD')
+plt.axhline(-2.5, c='r', ls='dotted', color='g', label='-2.5std')
+plt.legend('Spread zscore {} vs {}' .format(gl,ts))
+
+#%%
+
+spread1=spread.rolling(window=1).mean()
+
+#%%
+
+spread30=spread.rolling(window=30).mean()
+
+#%%
+
+std30=spread.rolling(window=30).std()
+
+#%%
+
+zscore30=(spread1-spread30)/std30
+
+#%%
+
+plt.figure(figsize=(12,5))
+plt.plot(zscore30)
+plt.axhline(0, color='b', ls='dashed', label='0')
+plt.axhline(2., color='g', ls='solid', label='2.0')
+plt.axhline(-2, color='y', ls='dotted', label='-2')
+plt.legend()
+plt.show()
+
+#%%
+
+SRMA1=spread_ratio.rolling(window=1).mean()
+
+#%%
+
+SRMA30=spread_ratio.rolling(window=30).mean()
+
+#%%
+
+SRstd=spread_ratio.rolling(window=30).std()
+
+#%%
+
+ZscoreMAratio=(SRMA1-SRMA30)/SRstd
+
+#%%
+
+plt.figure(figsize=(12,5))
+plt.plot(ZscoreMAratio)
+
+#%%
+
+from statsmodels.tsa.stattools import coint
+
+#%%
+
+yo=gl['Close']
+y1=ts['Close']
+
+#%%
+
+t_stat_summary = statsmodels.tsa.stattools.coint(yo, y1, trend='c', method='aeg', maxlag=None, autolag='aic', return_results=True) 
+
+
+
+#%%
+
+from scipy.stats import ttest_ind
+
+#%%
+
+ttest_ind(yo,y1)
+
+#%%
+
+spread_ratio=gl['Close']/ts['Close']
+
+#%%
+
+
+from statsmodels.tsa.stattools import adfuller
+def adf_check(time_series):
+    """
+    Pass in a time series, returns ADF report
+    """
+    result = adfuller(time_series)
+    print('Augmented Dickey-Fuller Test:')
+    labels = ['ADF Test Statistic','p-value','#Lags Used','Number of Observations Used']
+
+    for value,label in zip(result,labels):
+        print(label+' : '+str(value) )
+    
+    if result[1] <= 0.05:
+        print("strong evidence against the null hypothesis, reject the null hypothesis. Data has no unit root and is mean-reverting")
+    else:
+        print("weak evidence against null hypothesis, time series has a unit root, indicating it is non-mean-reverting ")
+    
+    print("Dickey Fuller Confidence Intervals:  ", adfuller(spread_ratio)[4])
+
+adf_check(spread_ratio)
+
+#%%
+
+np.corrcoef(gl,ts)
+
+#%%
+
+np.cov(gl,ts)
+
+#%% md
+
+# Differencing method of spread; GARCH volatility method of spread and final use log returns minus average log returns of spread over GARCH - to be done next
+
+#%%
+
+ZscoreMAratio[-20:]
+
+#%%
+
+spread_ratio[-20:]
+
+#%%
+
+
+
+#%%
+
+
